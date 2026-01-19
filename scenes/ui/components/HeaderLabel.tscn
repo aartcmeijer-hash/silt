@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://headerlabel"]
+
+[ext_resource type="LabelSettings" uid="uid://fontsettingsheader" path="res://resources/fonts/Header.tres" id="1_settings"]
+
+[node name="HeaderLabel" type="Label"]
+text = "Header"
+label_settings = ExtResource("1_settings")
+vertical_alignment = 1

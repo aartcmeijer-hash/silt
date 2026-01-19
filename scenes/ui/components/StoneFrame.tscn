@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://stoneframe"]
+
+[ext_resource type="Theme" uid="uid://maintheme" path="res://resources/main_theme.theme" id="1_theme"]
+
+[node name="StoneFrame" type="PanelContainer"]
+theme = ExtResource("1_theme")

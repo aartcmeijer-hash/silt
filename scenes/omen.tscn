@@ -1,6 +1,9 @@
 [gd_scene load_steps=5 format=3 uid="uid://omen_scene_id"]
 
 [ext_resource type="Script" path="res://scripts/Omen.gd" id="1_omen"]
+[ext_resource type="Theme" path="res://resources/main_theme.theme" id="2_theme"]
+[ext_resource type="LabelSettings" uid="uid://fontsettingsheader" path="res://resources/fonts/Header.tres" id="3_header"]
+[ext_resource type="LabelSettings" uid="uid://fontsettingsbody" path="res://resources/fonts/Body.tres" id="4_body"]
 
 [sub_resource type="Gradient" id="Gradient_vignette"]
 offsets = PackedFloat32Array(0, 0.8)
@@ -11,18 +14,6 @@ gradient = SubResource("Gradient_vignette")
 fill = 1
 fill_from = Vector2(0.5, 0.5)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
-bg_color = Color(0.8, 0.75, 0.65, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.3, 0.3, 0.3, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
 [node name="Omen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -30,6 +21,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("2_theme")
 script = ExtResource("1_omen")
 
 [node name="Background" type="ColorRect" parent="."]
@@ -39,7 +31,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.71, 0.643, 0.545, 1)
+color = Color(0.709804, 0.643137, 0.545098, 1)
 
 [node name="Vignette" type="TextureRect" parent="."]
 layout_mode = 1
@@ -68,17 +60,16 @@ theme_override_constants/separation = 40
 
 [node name="HeaderLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 48
 text = "THE OMEN OF THE SHELLS"
+label_settings = ExtResource("3_header")
 horizontal_alignment = 1
 uppercase = true
 
 [node name="NarrativeLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
-theme_override_font_sizes/font_size = 24
 text = "The fire provides warmth, but the stomach demands more. A pile of discarded shells lies nearby. One survivor reaches for them."
+label_settings = ExtResource("4_body")
 horizontal_alignment = 1
 autowrap_mode = 2
 
@@ -93,7 +84,6 @@ custom_minimum_size = Vector2(300, 400)
 layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 4
-theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/CardsContainer/ConsumeCard"]
 layout_mode = 2
@@ -101,21 +91,21 @@ alignment = 1
 
 [node name="Title" type="Label" parent="MarginContainer/VBoxContainer/CardsContainer/ConsumeCard/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 32
 text = "CONSUME"
+label_settings = ExtResource("3_header")
 horizontal_alignment = 1
 
 [node name="Description" type="Label" parent="MarginContainer/VBoxContainer/CardsContainer/ConsumeCard/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
 text = "Gain +1 Strength"
+label_settings = ExtResource("4_body")
 horizontal_alignment = 1
 
 [node name="Risk" type="Label" parent="MarginContainer/VBoxContainer/CardsContainer/ConsumeCard/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.2, 0.2, 1)
+theme_override_colors/font_color = Color(0.545098, 0.270588, 0.0745098, 1)
 text = "Chance of Sickness"
+label_settings = ExtResource("4_body")
 horizontal_alignment = 1
 
 [node name="ObserveCard" type="PanelContainer" parent="MarginContainer/VBoxContainer/CardsContainer"]
@@ -123,7 +113,6 @@ custom_minimum_size = Vector2(300, 400)
 layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 4
-theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/CardsContainer/ObserveCard"]
 layout_mode = 2
@@ -131,21 +120,21 @@ alignment = 1
 
 [node name="Title" type="Label" parent="MarginContainer/VBoxContainer/CardsContainer/ObserveCard/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 32
 text = "OBSERVE"
+label_settings = ExtResource("3_header")
 horizontal_alignment = 1
 
 [node name="Description" type="Label" parent="MarginContainer/VBoxContainer/CardsContainer/ObserveCard/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
 text = "+1 Innovation"
+label_settings = ExtResource("4_body")
 horizontal_alignment = 1
 
 [node name="Risk" type="Label" parent="MarginContainer/VBoxContainer/CardsContainer/ObserveCard/VBoxContainer"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.2, 0.6, 0.2, 1)
+theme_override_colors/font_color = Color(0, 0.278431, 0.670588, 1)
 text = "Risk: None"
+label_settings = ExtResource("4_body")
 horizontal_alignment = 1
 
 [node name="TransitionOverlay" type="ColorRect" parent="."]

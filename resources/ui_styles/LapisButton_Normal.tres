@@ -1,0 +1,10 @@
+[gd_resource type="StyleBoxFlat" format=3 uid="uid://lapisbuttonnormal"]
+
+[resource]
+bg_color = Color(0.239216, 0.211765, 0.176471, 1)
+border_width_bottom = 3
+border_color = Color(0, 0.278431, 0.670588, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
