@@ -26,11 +26,28 @@ func _ready():
 
 	if grid_manager:
 		grid_manager.move_requested.connect(_on_unit_move_requested)
+		_initialize_resources()
 	else:
 		push_warning("TrialManager: GridManager not found.")
 
 	# Initialize turn states for survivors (if any exist at start)
 	start_phase(Phase.PLAYER_PHASE)
+
+func _initialize_resources():
+	if not grid_manager:
+		return
+
+	for unit in grid_manager.occupancy_map.values():
+		# Duplicate Survivor Resource
+		if "survivor_resource" in unit and unit.survivor_resource:
+			unit.survivor_resource = unit.survivor_resource.duplicate(true)
+
+		# Duplicate Boss Resources
+		if "ai_deck" in unit and unit.ai_deck is Array:
+			unit.ai_deck = unit.ai_deck.duplicate(true)
+
+		if "hit_location_deck" in unit and unit.hit_location_deck is Array:
+			unit.hit_location_deck = unit.hit_location_deck.duplicate(true)
 
 func _exit_tree():
 	if grid_manager and is_instance_valid(grid_manager):
