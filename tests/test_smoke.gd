@@ -1,4 +1,4 @@
-extends GdUnitTestSuite
+extends "res://addons/gdUnit4/src/GdUnitTestSuite.gd"
 
 func test_smoke_checks():
 	# 1. Check if GameManager (Autoload) can be loaded/instantiated
