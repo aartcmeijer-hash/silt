@@ -1,5 +1,7 @@
 extends Node2D
 
+signal move_requested(unit, target_pos)
+
 # Grid Configuration
 const GRID_WIDTH = 24
 const GRID_HEIGHT = 24
@@ -94,7 +96,7 @@ func _handle_grid_input(screen_pos):
 		return
 
 	# Check what is at the clicked tile
-	var occupied_by = occupancy_map.get(grid_pos)
+	var occupied_by = get_unit_at(grid_pos)
 
 	if selected_unit:
 		if occupied_by == selected_unit:
@@ -109,7 +111,7 @@ func _handle_grid_input(screen_pos):
 			if grid_pos in valid_moves:
 				if ghost_pos == grid_pos:
 					# Clicked Ghost again -> CONFIRM MOVE
-					_execute_move(selected_unit, grid_pos)
+					emit_signal("move_requested", selected_unit, grid_pos)
 				else:
 					# Show Ghost
 					ghost_pos = grid_pos
@@ -144,7 +146,10 @@ func _deselect():
 	valid_moves.clear()
 	queue_redraw()
 
-func _execute_move(unit, target_pos):
+func get_unit_at(grid_pos: Vector2i) -> Node:
+	return occupancy_map.get(grid_pos)
+
+func move_unit(unit, target_pos):
 	var current_pos = local_to_grid(unit.position)
 
 	# Update Occupancy
