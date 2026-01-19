@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    # Use the barichello/godot-ci Docker image which comes with Godot installed.
+    # Matching the project version 4.2.
+    container:
+      image: barichello/godot-ci:4.2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GdUnit4
+        run: |
+          # Download GdUnit4 addon
+          # Using v4.2.1 as a stable release for Godot 4.2
+          wget https://github.com/MikeSchulze/gdUnit4/archive/refs/tags/v4.2.1.zip -O gdUnit4.zip
+          unzip gdUnit4.zip
+          mkdir -p addons/
+          # The zip usually contains a folder like gdUnit4-4.2.1/addons/gdUnit4
+          # GitHub archive zips have a root folder `repo-tag`.
+          # We use a wildcard to match the versioned directory name.
+          mv gdUnit4-*/addons/gdUnit4 addons/
+          rm -rf gdUnit4.zip gdUnit4-*
+
+      - name: Project Check (Import)
+        # Import the project headlessly to check for script errors or missing resources.
+        run: godot --headless --quit --editor
+
+      - name: Run Smoke Tests
+        # Run the specific smoke test using GdUnit4 CLI
+        run: |
+          godot --headless -s addons/gdUnit4/bin/GdUnitCmdTool.gd -a tests/test_smoke.gd
+
+      # Export Check is skipped because 'export_presets.cfg' is missing in the repository.
+      # To enable this step, create export presets in Godot and commit 'export_presets.cfg'.
+      # - name: Export Check
+      #   run: godot --headless --export-pack "Linux/X11" /tmp/test.pck
