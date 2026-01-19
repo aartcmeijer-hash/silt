@@ -175,8 +175,10 @@ func _get_valid_moves(unit, range_val):
 	queue.append({ "pos": start_pos, "dist": 0 })
 	visited[start_pos] = true
 
-	while queue.size() > 0:
-		var current = queue.pop_front()
+	var head = 0
+	while head < queue.size():
+		var current = queue[head]
+		head += 1
 		var c_pos = current["pos"]
 		var c_dist = current["dist"]
 
