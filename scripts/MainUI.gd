@@ -12,6 +12,10 @@ func _ready():
 	get_tree().root.size_changed.connect(_on_viewport_resized)
 	_apply_layout()
 
+func _exit_tree():
+	if get_tree() and get_tree().root and get_tree().root.size_changed.is_connected(_on_viewport_resized):
+		get_tree().root.size_changed.disconnect(_on_viewport_resized)
+
 func _on_viewport_resized():
 	_apply_layout()
 

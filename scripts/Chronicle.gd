@@ -15,6 +15,13 @@ func _ready():
 	else:
 		push_error("GameManager singleton not found")
 
+func _exit_tree():
+	if GameManager:
+		if GameManager.innovation_unlocked.is_connected(_on_innovation_unlocked):
+			GameManager.innovation_unlocked.disconnect(_on_innovation_unlocked)
+		if GameManager.survivor_died.is_connected(_on_survivor_died):
+			GameManager.survivor_died.disconnect(_on_survivor_died)
+
 func add_entry(text: String):
 	var label = Label.new()
 	label.text = text

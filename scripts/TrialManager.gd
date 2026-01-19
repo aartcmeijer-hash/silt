@@ -32,6 +32,11 @@ func _ready():
 	# Initialize turn states for survivors (if any exist at start)
 	start_phase(Phase.PLAYER_PHASE)
 
+func _exit_tree():
+	if grid_manager and is_instance_valid(grid_manager):
+		if grid_manager.move_requested.is_connected(_on_unit_move_requested):
+			grid_manager.move_requested.disconnect(_on_unit_move_requested)
+
 func start_phase(new_phase: Phase):
 	current_phase = new_phase
 	emit_signal("phase_changed", current_phase)
