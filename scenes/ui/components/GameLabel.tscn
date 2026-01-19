@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://gamelabel"]
+
+[ext_resource type="LabelSettings" uid="uid://fontsettingsbody" path="res://resources/fonts/Body.tres" id="1_settings"]
+
+[node name="GameLabel" type="Label"]
+text = "Label"
+label_settings = ExtResource("1_settings")
+vertical_alignment = 1

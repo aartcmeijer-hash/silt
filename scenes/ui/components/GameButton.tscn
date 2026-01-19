@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://gamebutton"]
+
+[ext_resource type="Theme" uid="uid://maintheme" path="res://resources/main_theme.theme" id="1_theme"]
+[ext_resource type="Script" path="res://scenes/ui/components/GameButton.gd" id="2_script"]
+
+[node name="GameButton" type="Button"]
+custom_minimum_size = Vector2(120, 40)
+theme = ExtResource("1_theme")
+text = "Button"
+script = ExtResource("2_script")
