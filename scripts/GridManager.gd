@@ -1,6 +1,7 @@
 extends Node2D
 
 signal move_requested(unit, target_pos)
+signal interaction_requested(source, target)
 
 # Grid Configuration
 const GRID_WIDTH = 24
@@ -103,8 +104,8 @@ func _handle_grid_input(screen_pos):
 			# Clicked self, deselect to allow for a clearer user flow.
 			_deselect()
 		elif occupied_by != null:
-			# Clicked another unit
-			_select_unit(occupied_by)
+			# Clicked another unit - Potential Interaction
+			emit_signal("interaction_requested", selected_unit, occupied_by)
 		else:
 			# Clicked empty tile
 			if grid_pos in valid_moves:
