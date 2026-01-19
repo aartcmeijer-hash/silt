@@ -98,9 +98,8 @@ func _handle_grid_input(screen_pos):
 
 	if selected_unit:
 		if occupied_by == selected_unit:
-			# Clicked self, maybe deselect or do nothing?
-			# Let's say clicking self deselects for now, or just keeps selection.
-			pass
+			# Clicked self, deselect to allow for a clearer user flow.
+			_deselect()
 		elif occupied_by != null:
 			# Clicked another unit
 			_select_unit(occupied_by)
@@ -122,7 +121,7 @@ func _handle_grid_input(screen_pos):
 			_select_unit(occupied_by)
 		else:
 			# Clicked empty space with nothing selected
-			pass
+			_deselect()
 
 func _select_unit(unit):
 	selected_unit = unit
