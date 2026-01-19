@@ -12,6 +12,7 @@ func _ready():
 	if GameManager:
 		GameManager.innovation_unlocked.connect(_on_innovation_unlocked)
 		GameManager.survivor_died.connect(_on_survivor_died)
+		GameManager.chronicle_log.connect(_on_chronicle_log)
 	else:
 		push_error("GameManager singleton not found")
 
@@ -43,3 +44,6 @@ func _on_innovation_unlocked(innovation_name: String):
 
 func _on_survivor_died(survivor_name: String, cause: String):
 	add_entry(_get_decade_prefix() + survivor_name + " was shattered by the " + cause + ".")
+
+func _on_chronicle_log(message: String):
+	add_entry(message)

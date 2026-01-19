@@ -3,6 +3,7 @@ extends CanvasLayer
 @onready var main_container = $MainContainer
 @onready var grid_placeholder = $MainContainer/GridPlaceholder
 @onready var hud_container = $MainContainer/HUDContainer
+@onready var end_turn_button = $MainContainer/HUDContainer/EndTurnButton
 
 # Using 1.0 as the threshold for Landscape/Portrait.
 # > 1.0 is Landscape, <= 1.0 is Portrait.
@@ -10,11 +11,16 @@ const ASPECT_RATIO_THRESHOLD = 1.0
 
 func _ready():
 	get_tree().root.size_changed.connect(_on_viewport_resized)
+	if end_turn_button:
+		end_turn_button.pressed.connect(_on_end_turn_pressed)
 	_apply_layout()
 
 func _exit_tree():
 	if get_tree() and get_tree().root and get_tree().root.size_changed.is_connected(_on_viewport_resized):
 		get_tree().root.size_changed.disconnect(_on_viewport_resized)
+
+func _on_end_turn_pressed():
+	print("End Turn pressed")
 
 func _on_viewport_resized():
 	_apply_layout()
