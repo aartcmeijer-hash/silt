@@ -4,11 +4,9 @@ signal phase_changed(new_phase)
 signal society_updated
 signal innovation_unlocked(innovation_name)
 signal survivor_died(survivor_name, cause)
-signal chronicle_log(message)
 
 var active_society: SocietyResource
 var current_roster: Array[SurvivorResource] = []
-var next_encounter_boss: String = ""
 
 # Assuming these are just placeholders for now as we don't have the actual scene files.
 const SCENE_PATHS = {
@@ -18,38 +16,10 @@ const SCENE_PATHS = {
 }
 
 func _ready():
-	# Check if society is initialized. If not, it's a fresh boot or needs loading.
-	# For now, if no active_society, we assume New Game.
+	# Initialize a default society if none exists, or load it.
+	# For now, we'll create a new one for testing purposes if it's null.
 	if not active_society:
 		active_society = SocietyResource.new()
-
-func start_new_game():
-	# 1. Chronicle Entry
-	emit_signal("chronicle_log", "Decade 1: We pulled ourselves from the mud near the Source. The Nile provides, but the shadows move.")
-
-	# 2. Initialize Society
-	active_society.current_decade = 1
-	active_society.resources = {}
-	active_society.unlocked_innovations = []
-
-	# 3. Generate 4 Survivors
-	current_roster.clear()
-	for i in range(4):
-		var survivor = SurvivorResource.new()
-		survivor.survivor_name = "Survivor " + str(i + 1)
-		survivor.age_decades = 0
-		survivor.traits = ["Raw Clay"]
-
-		# Set Armor: 1 on Torso, 0 on others (default is 0)
-		survivor.body_parts["Torso"]["armor"] = 1
-
-		current_roster.append(survivor)
-
-	# 4. Transition to Omen
-	change_phase("OMEN")
-
-func log_chronicle(message: String):
-	emit_signal("chronicle_log", message)
 
 func change_phase(target_phase: String):
 	var scene_path = ""
@@ -84,12 +54,16 @@ func advance_decade():
 	if active_society:
 		active_society.current_decade += 1
 
-	for i in range(current_roster.size() - 1, -1, -1):
-		var survivor = current_roster[i]
+	var survivors_to_remove = []
+
+	for survivor in current_roster:
 		survivor.age_decades += 1
 		if survivor.age_decades > 5: # Elder limit > 5 decades
+			survivors_to_remove.append(survivor)
 			# Handle retirement/death logic here
 			# print("Survivor retired/died")
-			current_roster.remove_at(i)
+
+	for s in survivors_to_remove:
+		current_roster.erase(s)
 
 	emit_signal("society_updated")
