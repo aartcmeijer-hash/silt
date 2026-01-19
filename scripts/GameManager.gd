@@ -2,6 +2,8 @@ extends Node
 
 signal phase_changed(new_phase)
 signal society_updated
+signal innovation_unlocked(innovation_name)
+signal survivor_died(survivor_name, cause)
 
 var active_society: SocietyResource
 var current_roster: Array[SurvivorResource] = []

@@ -1,0 +1,32 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/SurvivorCard.gd" id="1_script"]
+
+[node name="SurvivorCard" type="PanelContainer"]
+script = ExtResource("1_script")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Survivor Name"
+
+[node name="BodyParts" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="HeadPanel" type="Panel" parent="VBoxContainer/BodyParts"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+
+[node name="TorsoPanel" type="Panel" parent="VBoxContainer/BodyParts"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+
+[node name="ArmsPanel" type="Panel" parent="VBoxContainer/BodyParts"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+
+[node name="LegsPanel" type="Panel" parent="VBoxContainer/BodyParts"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
