@@ -1,0 +1,51 @@
+[gd_scene load_steps=2 format=3 uid="uid://d3yq1q1q1q1q1"]
+
+[ext_resource type="Script" path="res://scripts/SiltPhase.gd" id="1_1q1q1"]
+
+[node name="SiltPhase" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_1q1q1")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Header" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Silt Phase - Settlement"
+
+[node name="InnovationTree" type="Panel" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TraditionPopup" type="Window" parent="."]
+title = "Choose Tradition"
+initial_position = 2
+size = Vector2i(400, 200)
+visible = false
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TraditionPopup"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ButtonA" type="Button" parent="TraditionPopup/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Option A"
+
+[node name="ButtonB" type="Button" parent="TraditionPopup/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Option B"
