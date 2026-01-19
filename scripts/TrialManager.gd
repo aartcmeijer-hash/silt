@@ -16,26 +16,84 @@ class TurnState:
 var current_phase: Phase = Phase.PLAYER_PHASE
 var turn_states: Dictionary = {} # Maps Node -> TurnState
 var grid_manager: Node = null
+var combat_resolver: CombatResolver = null
+var trial_ui: TrialUI = null
+var boss_node: Node2D = null
 
 # In a real scene, this would be set or found.
 # We will assume GridManager is a sibling.
 func _ready():
+	# Initialize Combat Resolver
+	combat_resolver = CombatResolver.new()
+	add_child(combat_resolver)
+	combat_resolver.combat_log.connect(_on_combat_log)
+	combat_resolver.survivor_died.connect(_on_survivor_died)
+
 	# Try to find GridManager
 	if get_parent():
 		grid_manager = get_parent().get_node_or_null("GridManager")
+		# Try to find UI
+		var canvas_layer = get_parent().get_node_or_null("CanvasLayer")
+		if canvas_layer and canvas_layer is TrialUI:
+			trial_ui = canvas_layer
 
 	if grid_manager:
 		grid_manager.move_requested.connect(_on_unit_move_requested)
-		_initialize_resources()
+		grid_manager.interaction_requested.connect(_on_interaction_requested)
 	else:
 		push_warning("TrialManager: GridManager not found.")
 
-	# Initialize boss if specified
-	if GameManager and GameManager.next_encounter_boss != "":
-		_spawn_boss(GameManager.next_encounter_boss)
+	# Spawn Units
+	spawn_units()
+
+	_initialize_resources()
 
 	# Initialize turn states for survivors (if any exist at start)
 	start_phase(Phase.PLAYER_PHASE)
+
+func spawn_units():
+	if not grid_manager:
+		return
+
+	# Spawn Survivors
+	var roster = []
+	if GameManager:
+		roster = GameManager.current_roster
+
+	var start_x = 0
+	var start_y = 0
+
+	for i in range(roster.size()):
+		var survivor = roster[i]
+		var survivor_node = Node2D.new()
+		survivor_node.name = survivor.survivor_name
+
+		# Visuals
+		var color_rect = ColorRect.new()
+		color_rect.size = Vector2(40, 40)
+		color_rect.color = Color.CYAN
+		color_rect.position = Vector2(-20, -20)
+		survivor_node.add_child(color_rect)
+
+		# Script/Data
+		survivor_node.set_meta("survivor_resource", survivor)
+
+		# Position (2x2)
+		var grid_x = start_x + (i % 2)
+		var grid_y = start_y + (i / 2)
+		var spawn_pos = Vector2i(grid_x, grid_y)
+
+		grid_manager.add_child(survivor_node)
+		survivor_node.position = grid_manager.grid_to_local(spawn_pos) + Vector2(32, 32)
+
+		# Attach script
+		survivor_node.set_script(load("res://scripts/UnitEntity.gd"))
+		survivor_node.survivor_resource = survivor
+
+	# Spawn Boss
+	_spawn_boss(GameManager.next_encounter_boss if GameManager else "Boss")
+
+	grid_manager._refresh_occupancy_map()
 
 func _initialize_resources():
 	if not grid_manager:
@@ -91,67 +149,86 @@ func _on_unit_move_requested(unit, target_pos):
 	if current_phase != Phase.PLAYER_PHASE:
 		return
 
+	# Update UI selection
+	if trial_ui and "survivor_resource" in unit:
+		trial_ui.update_survivor_status(unit.survivor_resource)
+
 	if unit in turn_states:
 		var state = turn_states[unit]
 		if state.can_move:
-			# Verify with GridManager if move is valid (GridManager already checked valid_moves,
-			# but we should double check if path is clear? GridManager handles that).
 			grid_manager.move_unit(unit, target_pos)
 			state.can_move = false
+		else:
+			_on_combat_log("Unit has already moved this turn.")
 
-			# Check for interactions?
-			# The prompt says: "Moving consumes the move; attacking or using an item consumes the act."
-			# It also says: "Trigger a signal attack_initiated... when a monster or survivor moves into range and acts."
-			# This implies an action is separate. But here we just handled move.
-			# If the user wants to attack, that would likely be a different input/method.
-			# For now, we just handle the move.
+func _on_interaction_requested(source, target):
+	if current_phase != Phase.PLAYER_PHASE:
+		return
 
-			# Note: If the unit moved adjacent to an enemy, the user might want to attack next.
-			# That logic would need another input handler (e.g. clicking on an enemy).
-			# For this task, we focus on the structure.
+	# Select unit if friendly
+	if "survivor_resource" in target and target.survivor_resource:
+		# Just update UI logic handled by GridManager selection mostly,
+		# but if we want to support switching selection:
+		grid_manager._select_unit(target)
+		if trial_ui:
+			trial_ui.update_survivor_status(target.survivor_resource)
+		return
+
+	# Attack if enemy
+	if source in turn_states:
+		var state = turn_states[source]
+		if state.can_act:
+			var source_pos = grid_manager.local_to_grid(source.position)
+			var target_pos = grid_manager.local_to_grid(target.position)
+
+			if _manhattan_distance(source_pos, target_pos) <= 1:
+				state.can_act = false
+
+				# Survivor attacks Boss
+				if "survivor_resource" in source and target == boss_node:
+					# Mock Hit Location Deck
+					var deck = []
+					if "hit_location_deck" in target: # Boss should have this
+						deck = target.hit_location_deck
+					else:
+						# Create mock deck
+						var card = HitLocationResource.new()
+						card.location_name = "Generic Spot"
+						deck.append(card)
+
+					combat_resolver.resolve_survivor_attack(source.survivor_resource, deck)
+
+					# Damage Boss Integrity (Assuming 1 dmg)
+					if "integrity" in target:
+						target.integrity -= 1
+						_on_combat_log("Boss Integrity: %d" % target.integrity)
+						check_game_state()
+			else:
+				_on_combat_log("Target out of range!")
+		else:
+			_on_combat_log("Unit has already acted this turn.")
 
 func end_turn():
 	if current_phase == Phase.PLAYER_PHASE:
 		start_phase(Phase.MONSTER_PHASE)
 
-func request_attack(attacker: Node, target: Node):
-	if current_phase != Phase.PLAYER_PHASE:
-		return
-
-	if attacker in turn_states:
-		var state = turn_states[attacker]
-		if state.can_act:
-			# Verify target validity/range if needed. For now, we assume caller checked range.
-			# (Or we could check adjacency here)
-			var attacker_pos = grid_manager.local_to_grid(attacker.position)
-			var target_pos = grid_manager.local_to_grid(target.position)
-
-			if _manhattan_distance(attacker_pos, target_pos) <= 1: # Basic range 1 check
-				state.can_act = false
-				emit_signal("attack_initiated", attacker, target)
-
 func _run_monster_turn():
-	if not grid_manager:
-		return
-
-	var units = grid_manager.occupancy_map.values()
-	var boss_node = null
-
-	# Find Boss
-	for unit in units:
-		if "ai_deck" in unit and unit.ai_deck is Array and unit.ai_deck.size() > 0:
-			boss_node = unit
-			break
-
-	if not boss_node:
-		# No monster, go back to player phase? Or end game?
-		# For now, switch back to player phase to prevent stuck state
+	if not grid_manager or not boss_node:
 		start_phase(Phase.PLAYER_PHASE)
 		return
 
 	# Retrieve AI Deck
-	var ai_deck = boss_node.ai_deck
+	var ai_deck = []
+	if "ai_deck" in boss_node:
+		ai_deck = boss_node.ai_deck
+
+	if ai_deck.is_empty():
+		_on_combat_log("Boss has no AI cards!")
+		start_phase(Phase.PLAYER_PHASE)
+		return
+
 	var ai_card = ai_deck[0] # Simple: pick first card
+	_on_combat_log("Boss plays: %s" % ai_card.card_name)
 
 	# Target Selection
 	var target = _get_best_target(boss_node, ai_card.targeting_priority)
@@ -160,22 +237,22 @@ func _run_monster_turn():
 		# Movement: Step-Toward
 		var start_pos = grid_manager.local_to_grid(boss_node.position)
 		var target_pos = grid_manager.local_to_grid(target.position)
+		var dist = _manhattan_distance(start_pos, target_pos)
 
 		# We want to be adjacent to target
-		if _manhattan_distance(start_pos, target_pos) > 1:
+		if dist > 1:
 			var next_step = _get_next_step(start_pos, target_pos)
 			if next_step != start_pos:
 				grid_manager.move_unit(boss_node, next_step)
 
-		# Check if in range to act (assuming range 1 for now or based on card?)
-		# Prompt says: "Move the Boss node to the nearest valid tile adjacent to the target"
-		# Then "Interaction: Trigger a signal ... when ... acts"
+		# Attack Logic
 		var current_pos = grid_manager.local_to_grid(boss_node.position)
-		var dist = _manhattan_distance(current_pos, grid_manager.local_to_grid(target.position))
+		dist = _manhattan_distance(current_pos, grid_manager.local_to_grid(target.position))
 
-		# Assuming range 1 adjacency for attack
 		if dist == 1:
-			emit_signal("attack_initiated", boss_node, target)
+			if "survivor_resource" in target:
+				combat_resolver.resolve_boss_attack(target.survivor_resource)
+				check_game_state()
 
 	# End Monster Phase
 	start_phase(Phase.PLAYER_PHASE)
@@ -260,58 +337,70 @@ func _spawn_boss(boss_id: String):
 	if not grid_manager:
 		return
 
-	# In a real implementation, we would load a scene or resource based on boss_id.
-	# For now, we create a placeholder node with a mock AI deck.
-
-	var boss_node = Node2D.new()
+	boss_node = Node2D.new()
 	boss_node.name = boss_id
+
+	# Visuals (3x3 tiles = 192x192)
+	var color_rect = ColorRect.new()
+	color_rect.size = Vector2(180, 180) # Slightly smaller
+	color_rect.color = Color.RED
+	color_rect.position = Vector2(-90, -90)
+	boss_node.add_child(color_rect)
 
 	# Assign a mock AI deck
 	var mock_card = AICardResource.new()
 	mock_card.card_name = "Claw Sweep"
 	mock_card.targeting_priority = "Closest"
 
-	# Attach AI Deck
-	boss_node.set_meta("ai_deck", [mock_card])
-	# Add property to mimic script behavior if needed
-	boss_node.set_script(load("res://scripts/CombatResolver.gd")) # Or a dedicated Boss script
-	# Actually, we just need it to carry data. We can attach a script that holds 'ai_deck'.
-	# Or just set a property if GDScript allows.
-	# Since 'ai_deck' access in _run_monster_turn uses "ai_deck in unit", we can attach a script.
-
-	var script = GDScript.new()
-	script.source_code = "extends Node2D\nvar ai_deck = []"
-	script.reload()
-	boss_node.set_script(script)
+	# Script for Boss Data
+	boss_node.set_script(load("res://scripts/UnitEntity.gd"))
 	boss_node.ai_deck = [mock_card]
+	boss_node.integrity = 10
+
+	# Mock Hit Location Deck
+	var hl = HitLocationResource.new()
+	hl.location_name = "Exposed Ribs"
+	boss_node.hit_location_deck = [hl, hl, hl]
 
 	# Add to GridManager
 	grid_manager.add_child(boss_node)
 
-	# Set Position (e.g. Center)
-	# Assuming 24x24 grid, center is 12,12
+	# Set Position (Center)
 	var spawn_pos = Vector2i(12, 12)
 	boss_node.position = grid_manager.grid_to_local(spawn_pos) + Vector2(grid_manager.TILE_SIZE/2.0, grid_manager.TILE_SIZE/2.0)
 
-	# Add 'get_grid_pos' method or similar for GridManager to pick it up?
-	# GridManager._refresh_occupancy_map iterates children and calls 'get_grid_pos' OR we force update.
-	# But GridManager._refresh_occupancy_map assumes child.has_method("get_grid_pos").
+func check_game_state():
+	# Check Victory
+	if boss_node and "integrity" in boss_node and boss_node.integrity <= 0:
+		_on_combat_log("VICTORY! Boss defeated.")
+		if GameManager:
+			GameManager.change_phase("SILT")
+		return
 
-	# Let's add get_grid_pos to the boss script
-	# We rely on grid_manager.TILE_SIZE which is 64.
-	script.source_code = """
-extends Node2D
-var ai_deck = []
-func get_grid_pos():
-	var tile_size = 64
-	var p = get_parent()
-	if p and "TILE_SIZE" in p:
-		tile_size = p.TILE_SIZE
-	return Vector2i(floor(position.x / tile_size), floor(position.y / tile_size))
-"""
-	script.reload()
-	boss_node.set_script(script)
-	boss_node.ai_deck = [mock_card]
+	# Check Defeat
+	var alive_survivors = 0
+	for unit in grid_manager.occupancy_map.values():
+		if "survivor_resource" in unit and unit.survivor_resource:
+			# If unit is still on grid, it's alive (we assume dead are removed or handled)
+			# But CombatResolver just logs death. We need to handle removal.
+			alive_survivors += 1
 
-	# Need to refresh map
-	grid_manager._refresh_occupancy_map()
+	if alive_survivors == 0:
+		_on_combat_log("GAME OVER! All survivors dead.")
+		# Return to Main Menu logic (omitted, just log for now or change scene to Main)
+
+func _on_combat_log(msg):
+	if trial_ui:
+		trial_ui.log_message(msg)
+	else:
+		print(msg)
+
+func _on_survivor_died(survivor):
+	_on_combat_log(survivor.survivor_name + " has perished.")
+	# Find and remove the unit
+	for unit in grid_manager.occupancy_map.values():
+		if "survivor_resource" in unit and unit.survivor_resource == survivor:
+			grid_manager.occupancy_map.erase(grid_manager.local_to_grid(unit.position))
+			unit.queue_free()
+			break
+	check_game_state()

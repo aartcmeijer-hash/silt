@@ -71,8 +71,8 @@ func roll_severe_injury(survivor: SurvivorResource, location: String) -> void:
 		emit_signal("combat_log", "%s has died from a severe %s injury!" % [survivor.survivor_name, location])
 		emit_signal("survivor_died", survivor)
 
-	elif d10_roll <= 5:
-		# 3-5 (Maimed)
+	elif d10_roll <= 9:
+		# 3-9 (Maimed)
 		var trait_name = "Maimed: " + location
 		# Optional: Flavor traits
 		match location:
@@ -87,5 +87,5 @@ func roll_severe_injury(survivor: SurvivorResource, location: String) -> void:
 		emit_signal("combat_log", "%s is Maimed! Gained trait: '%s'. %s is Shattered." % [survivor.survivor_name, trait_name, location])
 
 	else:
-		# 6-10 (Knockdown)
-		emit_signal("combat_log", "%s is Knocked Down! Cannot act next turn." % survivor.survivor_name)
+		# 10 (Survival)
+		emit_signal("combat_log", "%s survived the severe injury with no permanent damage!" % survivor.survivor_name)

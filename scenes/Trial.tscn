@@ -1,0 +1,16 @@
+[gd_scene load_steps=5 format=3 uid="uid://trial_scene"]
+
+[ext_resource type="Script" path="res://scripts/GridManager.gd" id="1_grid"]
+[ext_resource type="Script" path="res://scripts/TrialManager.gd" id="2_trial"]
+[ext_resource type="Script" path="res://scripts/TrialUI.gd" id="3_ui"]
+
+[node name="Trial" type="Node2D"]
+
+[node name="GridManager" type="Node2D" parent="."]
+script = ExtResource("1_grid")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+script = ExtResource("3_ui")
+
+[node name="TrialManager" type="Node" parent="."]
+script = ExtResource("2_trial")
