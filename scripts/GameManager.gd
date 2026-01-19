@@ -52,16 +52,12 @@ func advance_decade():
 	if active_society:
 		active_society.current_decade += 1
 
-	var survivors_to_remove = []
-
-	for survivor in current_roster:
+	for i in range(current_roster.size() - 1, -1, -1):
+		var survivor = current_roster[i]
 		survivor.age_decades += 1
 		if survivor.age_decades > 5: # Elder limit > 5 decades
-			survivors_to_remove.append(survivor)
 			# Handle retirement/death logic here
 			# print("Survivor retired/died")
-
-	for s in survivors_to_remove:
-		current_roster.erase(s)
+			current_roster.remove_at(i)
 
 	emit_signal("society_updated")
