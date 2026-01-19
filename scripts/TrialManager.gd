@@ -29,6 +29,10 @@ func _ready():
 	else:
 		push_warning("TrialManager: GridManager not found.")
 
+	# Initialize boss if specified
+	if GameManager and GameManager.next_encounter_boss != "":
+		_spawn_boss(GameManager.next_encounter_boss)
+
 	# Initialize turn states for survivors (if any exist at start)
 	start_phase(Phase.PLAYER_PHASE)
 
@@ -234,3 +238,63 @@ func _get_next_step(start_pos: Vector2i, target_pos: Vector2i) -> Vector2i:
 
 func _manhattan_distance(a: Vector2i, b: Vector2i) -> int:
 	return abs(a.x - b.x) + abs(a.y - b.y)
+
+func _spawn_boss(boss_id: String):
+	if not grid_manager:
+		return
+
+	# In a real implementation, we would load a scene or resource based on boss_id.
+	# For now, we create a placeholder node with a mock AI deck.
+
+	var boss_node = Node2D.new()
+	boss_node.name = boss_id
+
+	# Assign a mock AI deck
+	var mock_card = AICardResource.new()
+	mock_card.card_name = "Claw Sweep"
+	mock_card.targeting_priority = "Closest"
+
+	# Attach AI Deck
+	boss_node.set_meta("ai_deck", [mock_card])
+	# Add property to mimic script behavior if needed
+	boss_node.set_script(load("res://scripts/CombatResolver.gd")) # Or a dedicated Boss script
+	# Actually, we just need it to carry data. We can attach a script that holds 'ai_deck'.
+	# Or just set a property if GDScript allows.
+	# Since 'ai_deck' access in _run_monster_turn uses "ai_deck in unit", we can attach a script.
+
+	var script = GDScript.new()
+	script.source_code = "extends Node2D\nvar ai_deck = []"
+	script.reload()
+	boss_node.set_script(script)
+	boss_node.ai_deck = [mock_card]
+
+	# Add to GridManager
+	grid_manager.add_child(boss_node)
+
+	# Set Position (e.g. Center)
+	# Assuming 24x24 grid, center is 12,12
+	var spawn_pos = Vector2i(12, 12)
+	boss_node.position = grid_manager.grid_to_local(spawn_pos) + Vector2(grid_manager.TILE_SIZE/2.0, grid_manager.TILE_SIZE/2.0)
+
+	# Add 'get_grid_pos' method or similar for GridManager to pick it up?
+	# GridManager._refresh_occupancy_map iterates children and calls 'get_grid_pos' OR we force update.
+	# But GridManager._refresh_occupancy_map assumes child.has_method("get_grid_pos").
+
+	# Let's add get_grid_pos to the boss script
+	# We rely on grid_manager.TILE_SIZE which is 64.
+	script.source_code = """
+extends Node2D
+var ai_deck = []
+func get_grid_pos():
+	var tile_size = 64
+	var p = get_parent()
+	if p and "TILE_SIZE" in p:
+		tile_size = p.TILE_SIZE
+	return Vector2i(floor(position.x / tile_size), floor(position.y / tile_size))
+"""
+	script.reload()
+	boss_node.set_script(script)
+	boss_node.ai_deck = [mock_card]
+
+	# Need to refresh map
+	grid_manager._refresh_occupancy_map()
