@@ -86,7 +86,7 @@ func _run_tests():
 	grid_manager.add_child(enemy)
 	grid_manager._refresh_occupancy_map()
 
-	trial_manager.request_attack(survivor, enemy)
+	trial_manager._on_interaction_requested(survivor, enemy)
 	assert(trial_manager.turn_states[survivor].can_act == false, "Survivor should have consumed act")
 	# We can't easily assert signal emission in this script without connecting it,
 	# but the state change confirms execution.

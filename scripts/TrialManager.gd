@@ -36,6 +36,7 @@ func _ready():
 		var canvas_layer = get_parent().get_node_or_null("CanvasLayer")
 		if canvas_layer and canvas_layer is TrialUI:
 			trial_ui = canvas_layer
+			trial_ui.end_turn_pressed.connect(end_turn)
 
 	if grid_manager:
 		grid_manager.move_requested.connect(_on_unit_move_requested)
@@ -114,6 +115,10 @@ func _initialize_resources():
 func start_phase(new_phase: Phase):
 	current_phase = new_phase
 	emit_signal("phase_changed", current_phase)
+
+	if trial_ui:
+		var phase_name = "PLAYER_PHASE" if current_phase == Phase.PLAYER_PHASE else "MONSTER_PHASE"
+		trial_ui.update_phase_indicator(phase_name)
 
 	if current_phase == Phase.PLAYER_PHASE:
 		_reset_survivor_turn_states()
