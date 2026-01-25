@@ -6,8 +6,9 @@ This file contains verified architectural details and conventions for the projec
 * General GDScript logic files are located in the `scripts/` directory.
 * The application entry point is defined as `scenes/Main.tscn` in `project.godot`, utilizing `scripts/Main.gd` to handle initial game bootstrapping logic.
 * The project follows a data-driven architecture using extended `Resource` classes.
-* New resource types `InnovationResource` and `TraditionResource` are defined in the `resources/` directory for use in the Settlement layer.
-* `SocietyResource` tracks settlement state including a `resources` Dictionary and `unlocked_innovations` Array.
+* New resource types `InnovationResource` and `TraditionResource` are defined in the `resources/` directory (PascalCase).
+* Core logic resources like `survivor_resource.gd`, `ai_card_resource.gd`, and `hit_location_resource.gd` are located in `scripts/` (snake_case).
+* `SocietyResource` (in `resources/`) tracks settlement state including a `resources` Dictionary and `unlocked_innovations` Array.
 * `SurvivorResource` tracks structural health via a `body_parts` dictionary and aging via `age_decades`. Survivors are retired when `age_decades > 5`.
 * `SurvivorResource` includes a `temporary_buffs` Array to track transient status effects (e.g., Omen buffs) separately from permanent traits.
 
@@ -40,18 +41,16 @@ This file contains verified architectural details and conventions for the projec
 
 ## Testing & CI
 * Test scripts are located in the `tests/` directory.
-* Legacy test scripts are GDScript files that extend `SceneTree`, designed to be self-executing via `godot -s tests/test_script.gd`.
-* `GdUnit4` test scripts extend `"res://addons/gdUnit4/src/GdUnitTestSuite.gd"` explicitly to avoid class name resolution issues in CI.
-* The project uses GitHub Actions for CI, leveraging the `barichello/godot-ci:4.2` Docker container.
-* Automated export checks are configured in CI but are currently skipped because `export_presets.cfg` is missing from the repository.
-* Benchmark scripts are located in the `benchmarks/` directory.
+* Legacy test scripts are GDScript files that extend `SceneTree`, designed to be self-executing via the command line (e.g., `godot4 -s tests/test_script.gd`).
+* Tests manually mock dependencies like `GameManager` or check `is_inside_tree()` to avoid runtime errors when running in isolation.
+* CI configuration is currently missing (no `.github` directory).
+* Benchmark scripts are located in the `benchmarks/` directory for performance testing.
 
 ## Optimization & Best Practices
 * To prevent signal ghosting during scene transitions, scripts must explicitly disconnect signals from persistent nodes (e.g., `GameManager`, `get_tree().root`) within the `_exit_tree()` method using `is_connected()` checks.
 * The user prioritizes performance optimization, specifically avoiding O(N^2) complexities in loops. Backward iteration using `remove_at()` is preferred over `erase()` for array filtering to eliminate linear search overhead.
 
 ## Environment
-* The project is a tactical roguelike game configured to target Godot 4.2.
+* The project is a tactical roguelike game configured to target Godot 4.5.
 * The project targets Mac and Android platforms, utilizing `_unhandled_input` for cross-platform interaction.
 * The binary to run godot is called `godot4`.
-* The `godot` command is not available in the default environment `PATH`.
