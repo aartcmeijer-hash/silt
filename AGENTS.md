@@ -3,13 +3,13 @@
 This file contains verified architectural details and conventions for the project.
 
 ## Codebase Structure & Logic
-* General GDScript logic files are located in the `scripts/` directory.
+* **Scripts**: General GDScript logic files are located in the `scripts/` directory. Naming convention is generally **PascalCase** for Logic/Node classes (e.g., `GameManager.gd`, `UnitEntity.gd`).
+* **Resources**: Resource definitions are split:
+    * Core game logic resources (e.g., `survivor_resource.gd`) are in `scripts/` using **snake_case**.
+    * Settlement layer resources (e.g., `InnovationResource.gd`) are in `resources/` using **PascalCase**.
+* **Scenes**: Located in `scenes/` with **mixed** naming conventions (e.g., `Main.tscn`, `omen.tscn`).
 * The application entry point is defined as `scenes/Main.tscn` in `project.godot`, utilizing `scripts/Main.gd` to handle initial game bootstrapping logic.
 * The project follows a data-driven architecture using extended `Resource` classes.
-* New resource types `InnovationResource` and `TraditionResource` are defined in the `resources/` directory for use in the Settlement layer.
-* `SocietyResource` tracks settlement state including a `resources` Dictionary and `unlocked_innovations` Array.
-* `SurvivorResource` tracks structural health via a `body_parts` dictionary and aging via `age_decades`. Survivors are retired when `age_decades > 5`.
-* `SurvivorResource` includes a `temporary_buffs` Array to track transient status effects (e.g., Omen buffs) separately from permanent traits.
 
 ## Game Loop & Managers
 * The game cycle phases are defined as 'OMEN', 'TRIAL', and 'SILT'.
@@ -27,6 +27,7 @@ This file contains verified architectural details and conventions for the projec
 * Severe injuries are determined by a D10 roll when an already injured body part is hit: 1-2 (Death), 3-5 (Maimed/Trait), 6-10 (Knockdown).
 * Tactical movement implements a 'Select-and-Confirm' input flow (Select Unit -> Show Ghost -> Confirm Move).
 * Grid navigation logic relies on an `occupancy_map` Dictionary mapping `Vector2i` coordinates to occupying `Node` instances.
+* `UnitEntity` (in `scripts/UnitEntity.gd`) determines its grid coordinates by accessing `TILE_SIZE` from its parent node (defaulting to 64).
 
 ## UI & Aesthetics
 * The "Brutalist Egyptology" UI aesthetic defines "Dried Silt" (#b5a48b) as the background color and "Lapis Blue" (#0047ab) for accents.
@@ -38,20 +39,20 @@ This file contains verified architectural details and conventions for the projec
 * When modifying UI element styles (e.g., in `SurvivorCard`), use `add_theme_stylebox_override` with new `StyleBoxFlat` instances to avoid mutating shared theme resources.
 * Grid input logic uses `_unhandled_input` to allow overlapping UI elements to block interaction. UI containers (e.g., `HUDContainer`) must use `mouse_filter = Stop` (0), while non-blocking overlays (e.g., `GridPlaceholder`) use `mouse_filter = Ignore` (2).
 
-## Testing & CI
+## Testing
 * Test scripts are located in the `tests/` directory.
-* Legacy test scripts are GDScript files that extend `SceneTree`, designed to be self-executing via `godot -s tests/test_script.gd`.
-* `GdUnit4` test scripts extend `"res://addons/gdUnit4/src/GdUnitTestSuite.gd"` explicitly to avoid class name resolution issues in CI.
-* The project uses GitHub Actions for CI, leveraging the `barichello/godot-ci:4.2` Docker container.
-* Automated export checks are configured in CI but are currently skipped because `export_presets.cfg` is missing from the repository.
-* Benchmark scripts are located in the `benchmarks/` directory.
+* **Format**: Legacy GDScript files that extend `SceneTree` (or mock it), designed to be self-executing.
+* **Execution**: Run tests via the command line: `godot4 -s tests/test_script_name.gd`.
+    * Note: Standalone script execution does not automatically initialize project Autoloads (Singletons) like `GameManager`. They must be manually mocked or instantiated within the test script.
+    * Standalone execution may fail to resolve global `class_name` definitions; tests must often explicitly `load()` script resources or define inner classes.
+* **Benchmarks**: Performance benchmark scripts are located in the `benchmarks/` directory.
 
 ## Optimization & Best Practices
 * To prevent signal ghosting during scene transitions, scripts must explicitly disconnect signals from persistent nodes (e.g., `GameManager`, `get_tree().root`) within the `_exit_tree()` method using `is_connected()` checks.
 * The user prioritizes performance optimization, specifically avoiding O(N^2) complexities in loops. Backward iteration using `remove_at()` is preferred over `erase()` for array filtering to eliminate linear search overhead.
 
-## Environment
-* The project is a tactical roguelike game configured to target Godot 4.2.
-* The project targets Mac and Android platforms, utilizing `_unhandled_input` for cross-platform interaction.
-* The binary to run godot is called `godot4`.
-* The `godot` command is not available in the default environment `PATH`.
+## Environment & Status
+* **Godot Version**: The project is configured for Godot **4.5** ("Forward Plus").
+* **Binary**: The binary to run godot is called `godot4`.
+* **CI/CD**: The project currently **lacks** a CI/CD configuration (no `.github` directory).
+* **Cross-Platform**: The project targets Mac and Android platforms, utilizing `_unhandled_input` for cross-platform interaction.
