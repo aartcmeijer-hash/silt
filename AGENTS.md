@@ -3,10 +3,11 @@
 This file contains verified architectural details and conventions for the project.
 
 ## Codebase Structure & Logic
-* General GDScript logic files are located in the `scripts/` directory.
+* General GDScript logic files are located in the `scripts/` directory and use PascalCase filenames (e.g., `GameManager.gd`, `UnitEntity.gd`).
 * The application entry point is defined as `scenes/Main.tscn` in `project.godot`, utilizing `scripts/Main.gd` to handle initial game bootstrapping logic.
 * The project follows a data-driven architecture using extended `Resource` classes.
-* New resource types `InnovationResource` and `TraditionResource` are defined in the `resources/` directory for use in the Settlement layer.
+* Settlement resources (e.g., `InnovationResource`, `TraditionResource`) are defined in the `resources/` directory using PascalCase.
+* Combat and Unit resources (e.g., `survivor_resource.gd`, `ai_card_resource.gd`) are defined in the `scripts/` directory using snake_case.
 * `SocietyResource` tracks settlement state including a `resources` Dictionary and `unlocked_innovations` Array.
 * `SurvivorResource` tracks structural health via a `body_parts` dictionary and aging via `age_decades`. Survivors are retired when `age_decades > 5`.
 * `SurvivorResource` includes a `temporary_buffs` Array to track transient status effects (e.g., Omen buffs) separately from permanent traits.
@@ -38,12 +39,11 @@ This file contains verified architectural details and conventions for the projec
 * When modifying UI element styles (e.g., in `SurvivorCard`), use `add_theme_stylebox_override` with new `StyleBoxFlat` instances to avoid mutating shared theme resources.
 * Grid input logic uses `_unhandled_input` to allow overlapping UI elements to block interaction. UI containers (e.g., `HUDContainer`) must use `mouse_filter = Stop` (0), while non-blocking overlays (e.g., `GridPlaceholder`) use `mouse_filter = Ignore` (2).
 
-## Testing & CI
+## Testing
 * Test scripts are located in the `tests/` directory.
-* Legacy test scripts are GDScript files that extend `SceneTree`, designed to be self-executing via `godot -s tests/test_script.gd`.
-* `GdUnit4` test scripts extend `"res://addons/gdUnit4/src/GdUnitTestSuite.gd"` explicitly to avoid class name resolution issues in CI.
-* The project uses GitHub Actions for CI, leveraging the `barichello/godot-ci:4.2` Docker container.
-* Automated export checks are configured in CI but are currently skipped because `export_presets.cfg` is missing from the repository.
+* Legacy test scripts are GDScript files that extend `SceneTree`, designed to be executed via `godot4 -s tests/test_script.gd`.
+* Dependency mocking in legacy `SceneTree` tests is implemented via inner classes extending the class under test (e.g., `class TestCombatResolver extends CombatResolver`).
+* Standalone script execution via `godot4 -s` fails to resolve global `class_name` definitions; tests running in this mode must explicitly `load()` script resources to resolve types or use inner classes.
 * Benchmark scripts are located in the `benchmarks/` directory.
 
 ## Optimization & Best Practices
@@ -51,7 +51,6 @@ This file contains verified architectural details and conventions for the projec
 * The user prioritizes performance optimization, specifically avoiding O(N^2) complexities in loops. Backward iteration using `remove_at()` is preferred over `erase()` for array filtering to eliminate linear search overhead.
 
 ## Environment
-* The project is a tactical roguelike game configured to target Godot 4.2.
+* The project is a tactical roguelike game configured to target Godot 4.5.
 * The project targets Mac and Android platforms, utilizing `_unhandled_input` for cross-platform interaction.
 * The binary to run godot is called `godot4`.
-* The `godot` command is not available in the default environment `PATH`.
