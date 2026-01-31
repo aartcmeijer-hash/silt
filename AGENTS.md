@@ -6,7 +6,8 @@ This file contains verified architectural details and conventions for the projec
 * General GDScript logic files are located in the `scripts/` directory.
 * The application entry point is defined as `scenes/Main.tscn` in `project.godot`, utilizing `scripts/Main.gd` to handle initial game bootstrapping logic.
 * The project follows a data-driven architecture using extended `Resource` classes.
-* New resource types `InnovationResource` and `TraditionResource` are defined in the `resources/` directory for use in the Settlement layer.
+* Core logic resources (`survivor_resource.gd`, `ai_card_resource.gd`, `hit_location_resource.gd`) are located in the `scripts/` directory using snake_case filenames.
+* Settlement resources (`InnovationResource.gd`, `TraditionResource.gd`, `SocietyResource.gd`) are defined in the `resources/` directory using PascalCase filenames.
 * `SocietyResource` tracks settlement state including a `resources` Dictionary and `unlocked_innovations` Array.
 * `SurvivorResource` tracks structural health via a `body_parts` dictionary and aging via `age_decades`. Survivors are retired when `age_decades > 5`.
 * `SurvivorResource` includes a `temporary_buffs` Array to track transient status effects (e.g., Omen buffs) separately from permanent traits.
@@ -24,7 +25,10 @@ This file contains verified architectural details and conventions for the projec
 ## Combat & AI
 * Monster AI behavior is defined by `AICardResource` decks and utilizes Manhattan distance for 'Step-Toward' movement logic.
 * `CombatResolver.gd` handles combat mechanics including hit location decks, reaction triggers (`reaction_triggered` signal), and damage logging (`combat_log` signal).
-* Severe injuries are determined by a D10 roll when an already injured body part is hit: 1-2 (Death), 3-5 (Maimed/Trait), 6-10 (Knockdown).
+* Severe injuries are determined by a D10 roll when an already injured body part is hit:
+    * **1-2**: Death (Survivor dies).
+    * **3-9**: Maimed (Gain Trait, Part Shattered).
+    * **10**: Survival (No Permanent Effect).
 * Tactical movement implements a 'Select-and-Confirm' input flow (Select Unit -> Show Ghost -> Confirm Move).
 * Grid navigation logic relies on an `occupancy_map` Dictionary mapping `Vector2i` coordinates to occupying `Node` instances.
 
@@ -40,18 +44,17 @@ This file contains verified architectural details and conventions for the projec
 
 ## Testing & CI
 * Test scripts are located in the `tests/` directory.
-* Legacy test scripts are GDScript files that extend `SceneTree`, designed to be self-executing via `godot -s tests/test_script.gd`.
-* `GdUnit4` test scripts extend `"res://addons/gdUnit4/src/GdUnitTestSuite.gd"` explicitly to avoid class name resolution issues in CI.
-* The project uses GitHub Actions for CI, leveraging the `barichello/godot-ci:4.2` Docker container.
-* Automated export checks are configured in CI but are currently skipped because `export_presets.cfg` is missing from the repository.
-* Benchmark scripts are located in the `benchmarks/` directory.
+* These are legacy GDScript files extending `SceneTree`, designed to be executed via `godot4 --headless -s tests/test_script.gd`.
+* **Current Status**: The existing tests currently fail to run due to `class_name` resolution issues in standalone script mode and incorrect file path references.
+* Benchmark scripts are located in the `benchmarks/` directory (also currently require path updates).
+* `GdUnit4` is **not** currently installed.
+* No CI/CD configuration (`.github` or similar) is present in the repository.
 
 ## Optimization & Best Practices
 * To prevent signal ghosting during scene transitions, scripts must explicitly disconnect signals from persistent nodes (e.g., `GameManager`, `get_tree().root`) within the `_exit_tree()` method using `is_connected()` checks.
 * The user prioritizes performance optimization, specifically avoiding O(N^2) complexities in loops. Backward iteration using `remove_at()` is preferred over `erase()` for array filtering to eliminate linear search overhead.
 
 ## Environment
-* The project is a tactical roguelike game configured to target Godot 4.2.
-* The project targets Mac and Android platforms, utilizing `_unhandled_input` for cross-platform interaction.
+* The project is a tactical roguelike game configured to target **Godot 4.5** ("Forward Plus" renderer).
 * The binary to run godot is called `godot4`.
 * The `godot` command is not available in the default environment `PATH`.
